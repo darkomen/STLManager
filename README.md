@@ -1,6 +1,6 @@
 # STL Manager
 
-**Versión congelada: v0.5.8.8.1** · **macOS** · **Swift / SwiftUI**
+**Versión congelada: v0.5.8.8** · **macOS** · **Swift / SwiftUI**
 
 STL Manager es una aplicación nativa para macOS que organiza la entrada de proyectos de impresión 3D, los incorpora a una biblioteca local con una estructura homogénea y permite normalizar proyectos antiguos. Vigila una carpeta configurable (`_Inbox`), muestra los elementos pendientes y simplifica la importación de modelos, fuentes e imágenes de referencia.
 
@@ -10,7 +10,7 @@ STL Manager es una aplicación nativa para macOS que organiza la entrada de proy
 
 ## Estado de la versión
 
-- **v0.5.8.8.1 — versión congelada y validada en uso:** añade importación automática opcional a partir de `_Inbox` y corrige advertencias de aislamiento de Swift 6 detectadas durante la integración.
+- **v0.5.8.8 — versión congelada y validada en uso:** añade importación automática opcional a partir de `_Inbox` y corrige advertencias de aislamiento de Swift 6 detectadas durante la integración.
 - **v0.5.8.4:** anterior base congelada; se mantiene como referencia en el historial del repositorio.
 - **v0.5.8.5–v0.5.8.7:** monitorización en segundo plano, ventana principal única, contador de pendientes en barra de menús y acceso a Ajustes desde la ventana principal.
 - **Sin garantía de integridad transaccional completa:** un apagado, cierre forzado o error del sistema de archivos puede interrumpir una operación.
