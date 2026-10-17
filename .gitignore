@@ -1,0 +1,24 @@
+# Xcode / macOS
+.DS_Store
+*.xcuserstate
+xcuserdata/
+DerivedData/
+build/
+.build/
+.swiftpm/xcode/package.xcworkspace/xcuserdata/
+
+# Apple distribution output (attach .app ZIP to a GitHub Release instead)
+*.app/
+*.xcarchive/
+*.dSYM/
+
+# Local metadata, sensitive credentials
+*.p12
+*.mobileprovision
+*.cer
+*.key
+.env
+.env.*
+
+# Keep Package.resolved tracked for reproducible builds.
+!Package.resolved
