@@ -1,19 +1,20 @@
 # STL Manager
 
-**Versión estable de referencia: v0.5.8.2** · **macOS** · **Swift / SwiftUI**
+**Versión congelada: v0.5.8.8.1** · **macOS** · **Swift / SwiftUI**
 
 STL Manager es una aplicación nativa para macOS que organiza la entrada de proyectos de impresión 3D, los incorpora a una biblioteca local con una estructura homogénea y permite normalizar proyectos antiguos. Vigila una carpeta configurable (`_Inbox`), muestra los elementos pendientes y simplifica la importación de modelos, fuentes e imágenes de referencia.
 
 > **Origen del proyecto:** aplicación personal desarrollada mediante *vibe coding* (diseño e iteración asistidos por IA), con pruebas funcionales manuales en Xcode. El código merece las mismas revisiones, copias de seguridad y pruebas que cualquier otro software que modifica archivos.
 >
-> **Alcance:** STL Manager **no** es un slicer ni un visor 3D. La aplicación complementaria **STLViewer** está planificada por separado; no está implementada en este repositorio.
+> **Alcance:** STL Manager **no** es un slicer ni un visor 3D. La aplicación complementaria **STLViewer** se desarrolla por separado; no está implementada en este repositorio.
 
 ## Estado de la versión
 
-- **v0.5.8.2:** versión congelada como candidata estable tras pruebas manuales de importación, normalización puntual, notificaciones, navegación al importador y apertura de `_Inbox` en Finder.
-- **Sin garantía de integridad transaccional completa:** una interrupción brusca (apagado, cierre forzado, fallo de disco) puede dejar una operación de archivos a medias.
-- **No se crean copias automáticas de la biblioteca.** Mantener una copia de seguridad propia, especialmente antes de normalizar proyectos existentes.
-- **Limitación conocida de validación:** no existe aquí una suite de pruebas automatizadas o matriz documentada de sistemas/macOS; las pruebas descritas son manuales.
+- **v0.5.8.8.1 — versión congelada y validada en uso:** añade importación automática opcional a partir de `_Inbox` y corrige advertencias de aislamiento de Swift 6 detectadas durante la integración.
+- **v0.5.8.4:** anterior base congelada; se mantiene como referencia en el historial del repositorio.
+- **v0.5.8.5–v0.5.8.7:** monitorización en segundo plano, ventana principal única, contador de pendientes en barra de menús y acceso a Ajustes desde la ventana principal.
+- **Sin garantía de integridad transaccional completa:** un apagado, cierre forzado o error del sistema de archivos puede interrumpir una operación.
+- **Sin copias automáticas de la biblioteca ni suite automatizada completa:** hacer respaldos y probar primero con proyectos pequeños.
 
 ## Funcionalidades
 
@@ -23,9 +24,16 @@ STL Manager es una aplicación nativa para macOS que organiza la entrada de proy
 - Monitorización periódica configurable: **5, 10, 30 o 60 segundos**; puede pausarse.
 - Detección de archivos individuales compatibles, ZIP y carpetas de proyecto.
 - Espera de estabilidad del elemento para evitar procesar archivos mientras se están copiando (heurística basada en atributos, no garantía absoluta ante copias pausadas).
-- Ventana principal con recuento de pendientes, acciones **Actualizar**, **Normalizar biblioteca** y **Abrir _Inbox en Finder**.
-- Notificaciones de sistema para **nuevos** elementos estables. Al pulsarlas, STL Manager se activa e intenta abrir directamente el asistente de importación del elemento correspondiente.
+- Ventana principal con recuento de pendientes, acciones **Actualizar**, **Normalizar biblioteca**, **Abrir _Inbox en Finder** y acceso a **Ajustes**.
+- Notificaciones de sistema para **nuevos** elementos estables, también mientras la aplicación permanece abierta en segundo plano. Al pulsarlas, STL Manager se activa e intenta abrir directamente el asistente de importación del elemento correspondiente.
 - Las notificaciones requieren permiso del usuario en los ajustes de macOS. El sistema operativo puede demorar o agrupar su presentación. Los archivos ya presentes al comenzar la vigilancia no se notifican retroactivamente.
+
+### Barra de menús y ventanas
+
+- Icono de estado con **contador de elementos pendientes** en `_Inbox` (el contador desaparece si no hay pendientes).
+- Comando para abrir STL Manager que **reutiliza la ventana principal existente**, en lugar de abrir copias de la misma ventana.
+- Ajustes accesibles tanto desde el icono de la barra de menús como desde un botón en la ventana principal, compartiendo las mismas preferencias.
+- La monitorización continúa con la aplicación abierta aunque la ventana pierda el foco o esté minimizada. **No es un servicio que siga ejecutándose con la app cerrada**.
 
 ### Importación de proyectos
 
@@ -47,6 +55,20 @@ STL Manager es una aplicación nativa para macOS que organiza la entrada de proy
 | `others/` | Otros ficheros conservados por el proyecto |
 
 El detector de la bandeja admite explícitamente `stl`, `step`, `stp`, `3mf`, `zip`, `scad`, `f3d` y `obj`, además de carpetas. **No todos los formatos clasificables se detectan necesariamente como archivos individuales sueltos** en `_Inbox`; pueden incluirse dentro de carpetas/ZIP.
+
+### Importación automática opcional (desde v0.5.8.8)
+
+En **Ajustes → Importación automática** se puede activar la importación sin abrir el asistente. Viene **desactivada por defecto**; existe una opción adicional para mostrar notificaciones de importación completada.
+
+- Revisa los elementos detectados de `_Inbox` y espera a que estén aparentemente estables antes de importarlos. El flujo utiliza comprobaciones de estabilidad en escaneos separados, sin prometer una detección perfecta de descargas pausadas.
+- Procesa los proyectos **uno a uno y en segundo plano**, reutilizando el planificador, el extractor ZIP y el importador del modo manual.
+- Acepta los mismos elementos admitidos por el monitor: archivos sueltos compatibles, carpetas y ZIP, siempre sujetos a las validaciones existentes.
+- Genera la estructura habitual, el `README.md`, el `.stlmanager.json` y los hashes SHA-256; solo tras verificar la copia intenta enviar el origen a la Papelera.
+- El nombre del proyecto se deriva del nombre del archivo/carpeta. No inventa URL de origen ni categorías.
+- **No sobrescribe proyectos existentes**. Las colisiones o los fallos dejan el elemento pendiente para resolución manual; durante la sesión evita reintentar indefinidamente un contenido fallido sin cambios.
+- Puede notificar éxitos; las incidencias quedan reflejadas en el estado de la aplicación y pueden generar aviso si se permiten notificaciones.
+
+**Advertencia:** activar la autoimportación puede provocar el traslado automático de archivos originales a la Papelera tras importar correctamente. Probar con una biblioteca de ensayo y mantener copias de seguridad. La aplicación debe permanecer en ejecución; macOS puede retrasar notificaciones.
 
 ### Normalización de proyectos existentes
 
@@ -197,7 +219,7 @@ STLManager/
 └── [otros archivos del proyecto]
 ```
 
-1. Hacer un commit del estado funcional y etiquetarlo **`v0.5.8.2`**.
+1. Hacer un commit del estado funcional y etiquetarlo **`v0.5.8.8.1`**.
 2. Crear una **GitHub Release** a partir de esa etiqueta y adjuntar el ZIP del `.app` exportado. Esto suele ser preferible a versionar un bundle binario dentro de Git.
 3. Incluir una breve nota de la release (macOS objetivo, cambios y advertencia sobre normalización sin copias automáticas).
 4. Conservar en Git el **`Package.resolved` del proyecto**, para que las dependencias se resuelvan a las mismas versiones en futuros builds.
@@ -208,11 +230,11 @@ Ejemplo, desde el directorio del repositorio (cuando esté inicializado y revisa
 
 ```bash
 git add .
-git commit -m "Release STL Manager v0.5.8.2"
-git tag v0.5.8.2
+git commit -m "Release STL Manager v0.5.8.8.1"
+git tag v0.5.8.8.1
 # Configurar el remoto de GitHub y subir rama y etiqueta:
 git push origin main
-git push origin v0.5.8.2
+git push origin v0.5.8.8.1
 ```
 
 > Si tu rama principal no se llama `main`, sustituye el nombre en el ejemplo.
@@ -221,7 +243,7 @@ git push origin v0.5.8.2
 
 - **Configura primero los permisos de biblioteca e Inbox** desde Preferencias. Son dos bookmarks independientes.
 - Para importar un proyecto, coloca un archivo/carpeta/ZIP en `_Inbox`, espera al análisis y selecciona la fila o pulsa su notificación.
-- Revisa siempre **nombre, URL de origen y destino** en la vista previa antes de confirmar.
+- En modo **manual**, revisa siempre **nombre, URL de origen y destino** en la vista previa antes de confirmar; en modo automático no aparece este paso.
 - Para normalizar, empieza por **uno o dos proyectos pequeños** y revisa el reporte final.
 - Si una carpeta contiene una colección de un diseñador con muchos modelos, márcala **Colección de solo lectura** antes de normalizar el resto; la regla queda en `.stlmanager/library.json`.
 - No uses el normalizador para dividir automáticamente una colección comprada en cientos de proyectos. La indexación por modelo es trabajo futuro del catálogo/STLViewer.
@@ -236,11 +258,13 @@ git push origin v0.5.8.2
 |---|---|
 | `STLManagerApp.swift` | Entrada SwiftUI, ventana principal, menú de barra de menús y Preferencias |
 | `ContentView.swift` | Bandeja, navegación hacia importación, acciones principales y botón Finder |
-| `AppState.swift` | Vigilancia de `_Inbox`, temporizador, detección y estabilidad |
-| `InboxNotifications.swift` | Notificaciones de macOS y encaminamiento al archivo elegido |
+| `AppState.swift` | Vigilancia de `_Inbox`, temporizador de Dispatch, detección, estabilidad y coordinación de importación automática |
+| `InboxNotifications.swift` | Notificaciones de nuevos pendientes, importaciones completadas o incidencias, y apertura del asistente |
 | `ImportView.swift` | Asistente y vista previa de importación |
 | `ImportPlanner.swift`, `ImportPlan.swift` | Validación y planificación de rutas de destino |
 | `ProjectImporter.swift` | Copia, verificación, creación de README/JSON y envío del original a Papelera |
+| `AutomaticInboxImporter.swift` | Flujo de importación automática secuencial que reutiliza el planificador e importador |
+| `SettingsView.swift` | Biblioteca, Inbox, monitorización y controles de autoimportación |
 | `ZipExtractor.swift` | Extracción ZIP mediante ZIPFoundation |
 | `FolderAccess.swift` | Bookmarks y acceso a carpetas bajo App Sandbox |
 | `NormalizationView.swift` | Análisis, selección de proyectos y reglas de carpetas |
@@ -248,13 +272,11 @@ git push origin v0.5.8.2
 | `NormalizationProgress.swift` | Estado de progreso, registro y cancelación cooperativa |
 | `FolderRules.swift` | Persistencia y consulta de `.stlmanager/library.json` |
 
-## Evolución prevista (no implementada en esta versión)
+## Relación con STLViewer y posibles mejoras futuras
 
-- **STLViewer:** aplicación separada de exploración, búsqueda, filtrado y previsualización 3D.
-- Catálogo compartido entre Manager y Viewer, con diseñadores, colecciones y categorías para **modelos individuales**, incluidos los de colecciones de solo lectura, sin alterar los originales.
-- Miniaturas/vistas previas 3D, navegación por colecciones y búsqueda más avanzada.
-- Pruebas automatizadas de importación, rollback, colisiones, reglas heredadas y flujos de notificaciones.
-- Mejoras adicionales de observabilidad y diagnósticos para colecciones de gran tamaño.
+**STLViewer** es una **aplicación independiente** que puede explorar la misma biblioteca de proyectos; no forma parte del código de STL Manager.
+
+Quedan como posibles mejoras futuras las pruebas automatizadas de importación, reversión ante errores, colisiones, reglas heredadas y notificaciones, así como herramientas de diagnóstico y un tratamiento más completo de carpetas que otros procesos sigan escribiendo.
 
 ---
 

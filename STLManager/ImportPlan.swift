@@ -1,12 +1,12 @@
 import Foundation
 
-struct PlannedFile: Identifiable {
+nonisolated struct PlannedFile: Identifiable {
     let source: URL
     let relativePath: String
     var id: String { relativePath }
 }
 
-struct ImportPlan {
+nonisolated struct ImportPlan {
     let item: InboxItem
     let name: String
     let sourceURL: String
@@ -18,7 +18,7 @@ struct ImportPlan {
     var sourceFolder: URL { stagingRoot ?? (item.type == .folder ? item.url : item.url.deletingLastPathComponent()) }
 }
 
-enum ImportError: LocalizedError {
+nonisolated enum ImportError: LocalizedError {
     case invalidName, invalidURL, emptyProject, destinationExists, missingBookmark
     case unsafeArchive, tooLarge, sourceChanged, unsupportedSource, securityAccess
 

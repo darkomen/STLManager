@@ -6,11 +6,25 @@ struct STLManagerApp: App {
     @State private var appState = AppState()
 
     var body: some Scene {
-        WindowGroup("STL Manager", id: "main") {
+        Window("STL Manager", id: "main") {
             ContentView().environment(appState)
         }
-        MenuBarExtra("STL Manager", systemImage: "shippingbox.fill") {
+        MenuBarExtra {
             STLManagerMenu(appState: appState)
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "shippingbox.fill")
+                if appState.pendingCount > 0 {
+                    Text("\(appState.pendingCount)")
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                        .monospacedDigit()
+                }
+            }
+            .accessibilityLabel(
+                appState.pendingCount == 0
+                    ? "STL Manager: no hay proyectos pendientes"
+                    : "STL Manager: \(appState.pendingCount) proyectos pendientes"
+            )
         }
         Settings {
             SettingsView()

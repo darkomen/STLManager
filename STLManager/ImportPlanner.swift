@@ -1,11 +1,11 @@
 import Foundation
 
-struct ImportPlanner {
+nonisolated struct ImportPlanner {
     static let binary: Set<String> = ["stl", "3mf", "step", "stp", "obj", "amf", "ply"]
     static let sources: Set<String> = ["f3d", "scad", "fcstd", "blend", "ipt", "sldprt", "sldasm"]
     static let images: Set<String> = ["png", "jpg", "jpeg", "webp", "gif", "heic"]
 
-    static func validate(name: String, sourceURL: String, library: URL) throws -> String {
+    nonisolated static func validate(name: String, sourceURL: String, library: URL) throws -> String {
         let clean = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !clean.isEmpty, clean != ".", clean != "..",
               !clean.contains("/"), !clean.contains(":"), !clean.contains("\\"),
@@ -21,7 +21,7 @@ struct ImportPlanner {
         return clean
     }
 
-    static func collect(_ item: InboxItem, stagingRoot: URL? = nil) throws -> [(URL, String)] {
+    nonisolated static func collect(_ item: InboxItem, stagingRoot: URL? = nil) throws -> [(URL, String)] {
         let base: URL
         if let stagingRoot { base = stagingRoot }
         else if item.type == .folder { base = item.url }
@@ -44,7 +44,7 @@ struct ImportPlanner {
         return result.sorted { $0.1 < $1.1 }
     }
 
-    static func destinationPath(for relative: String) throws -> String {
+    nonisolated static func destinationPath(for relative: String) throws -> String {
         let parts = relative.split(separator: "/").map(String.init)
         guard !parts.isEmpty, parts.allSatisfy({ $0 != "." && $0 != ".." && !$0.isEmpty }) else { throw ImportError.unsafeArchive }
         let name = parts.last!
@@ -54,7 +54,7 @@ struct ImportPlanner {
         return ([category] + parts).joined(separator: "/")
     }
 
-    static func prepare(item: InboxItem, name: String, sourceURL: String, library: URL, staging: URL? = nil) throws -> ImportPlan {
+    nonisolated static func prepare(item: InboxItem, name: String, sourceURL: String, library: URL, staging: URL? = nil) throws -> ImportPlan {
         let clean = try validate(name: name, sourceURL: sourceURL, library: library)
         let entries = try collect(item, stagingRoot: staging)
         guard !entries.isEmpty else { throw ImportError.emptyProject }

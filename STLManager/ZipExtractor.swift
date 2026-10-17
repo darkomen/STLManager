@@ -3,7 +3,7 @@ import ZIPFoundation
 
 struct ZipExtractor {
     // Necesita el paquete Swift https://github.com/weichsel/ZIPFoundation
-    static func unpack(_ zipURL: URL) throws -> URL {
+    nonisolated static func unpack(_ zipURL: URL) throws -> URL {
         let fm = FileManager.default
         let staging = fm.temporaryDirectory.appendingPathComponent("stlmanager-zip-\(UUID().uuidString)", isDirectory: true)
         try fm.createDirectory(at: staging, withIntermediateDirectories: true)

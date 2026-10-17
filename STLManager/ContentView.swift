@@ -6,6 +6,7 @@ struct ContentView: View {
 
     @AppStorage("scanInterval") private var scanInterval = 10
     @AppStorage("monitorDownloads") private var monitorDownloads = true
+    @AppStorage("autoImportEnabled") private var autoImportEnabled = false
     @AppStorage("inboxFolder") private var inboxFolder = ""
     @AppStorage("libraryFolder") private var libraryFolder = ""
 
@@ -32,6 +33,18 @@ struct ContentView: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 8)
                     .background(.quaternary.opacity(0.45), in: Capsule())
+
+                // Reutiliza la escena Settings { SettingsView() } de STLManagerApp.
+                // El mismo panel sigue accesible desde el menú de estado de macOS.
+                SettingsLink {
+                    Image(systemName: "gearshape")
+                        .font(.system(size: 16, weight: .medium))
+                        .frame(width: 26, height: 26)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.large)
+                .help("Ajustes de STL Manager")
+                .accessibilityLabel("Ajustes de STL Manager")
             }
             .padding(.bottom, 26)
 
@@ -67,6 +80,14 @@ struct ContentView: View {
                     .font(.callout)
                     .foregroundStyle(.orange)
                     .padding(.top, 16)
+            }
+
+            if let status = appState.autoImportStatus {
+                Label(status, systemImage: "shippingbox.and.arrow.backward")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+                    .padding(.top, 10)
             }
 
             HStack {
@@ -151,6 +172,7 @@ struct ContentView: View {
         .sheet(isPresented: $showNormalizer) { NormalizationView() }
         .onChange(of: scanInterval) { appState.startMonitoring() }
         .onChange(of: monitorDownloads) { appState.startMonitoring() }
+        .onChange(of: autoImportEnabled) { appState.startMonitoring() }
         .onChange(of: inboxFolder) { appState.startMonitoring() }
         .onChange(of: libraryFolder) { appState.startMonitoring() }
         .onReceive(NotificationCenter.default.publisher(for: InboxNotificationRouter.openItem)) { _ in

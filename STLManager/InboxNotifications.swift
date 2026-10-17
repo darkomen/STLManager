@@ -37,6 +37,29 @@ final class InboxNotificationRouter {
         }
     }
 
+    func notifyAutoImportSuccess(name: String, detail: String) {
+        guard authorized else { return }
+        let content = UNMutableNotificationContent()
+        content.title = "Proyecto añadido con éxito"
+        content.body = "\(name) · \(detail)"
+        content.sound = .default
+        UNUserNotificationCenter.current().add(
+            UNNotificationRequest(identifier: "auto.success." + UUID().uuidString,
+                                      content: content, trigger: nil)
+        )
+    }
+
+    func notifyAutoImportFailure(name: String, detail: String) {
+        guard authorized else { return }
+        let content = UNMutableNotificationContent()
+        content.title = "Importación manual necesaria"
+        content.body = "\(name): \(detail)"
+        UNUserNotificationCenter.current().add(
+            UNNotificationRequest(identifier: "auto.failure." + UUID().uuidString,
+                                      content: content, trigger: nil)
+        )
+    }
+
     func markOpened(path: String) {
         if pendingInboxPath == path { pendingInboxPath = nil }
     }

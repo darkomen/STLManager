@@ -1,12 +1,12 @@
 import Foundation
 
-enum InboxItemType {
+nonisolated enum InboxItemType: Sendable {
     case singleFile
     case folder
     case archive
 }
 
-struct InboxItem: Identifiable {
+nonisolated struct InboxItem: Identifiable, Sendable {
     let url: URL
     let type: InboxItemType
     /// Archivos de modelo encontrados. Para ZIP, es el propio ZIP

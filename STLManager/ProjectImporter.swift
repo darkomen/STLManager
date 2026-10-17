@@ -1,7 +1,7 @@
 import Foundation
 import CryptoKit
 
-struct ProjectImporter {
+nonisolated struct ProjectImporter {
     nonisolated static func digest(_ url: URL) throws -> String {
         let handle = try FileHandle(forReadingFrom: url)
         defer { try? handle.close() }
@@ -16,7 +16,7 @@ struct ProjectImporter {
 
     /// Copiamos, verificamos, publicamos y solo entonces enviamos el origen a la Papelera.
     /// Si la Papelera falla, el proyecto sigue importado y conservamos el original.
-    static func execute(_ plan: ImportPlan) throws -> String {
+    nonisolated static func execute(_ plan: ImportPlan) throws -> String {
         let fm = FileManager.default
         let working = plan.libraryURL.appendingPathComponent(".stlmanager-work-\(UUID().uuidString)", isDirectory: true)
         let dest = plan.destination

@@ -7,12 +7,22 @@ final class AppState {
     var inboxItems: [InboxItem] = []
     var monitoringError: String?
 
-    private var timer: Timer?
+    private var timer: DispatchSourceTimer?
     // Al arrancar, los elementos preexistentes son conocidos, no "nuevos".
     private var initializedInbox = false
     private var knownPaths: Set<String> = []
     private var stability: [String: (signature: String, firstSeen: Date)] = [:]
     private var notified: Set<String> = []
+    private var autoAttempted: [String: String] = [:]
+    private var autoInProgress = false
+    var autoImportStatus: String?
+
+    private var autoImportEnabled: Bool {
+        isEnabled && UserDefaults.standard.bool(forKey: "autoImportEnabled")
+    }
+    private var notifyAutoSuccess: Bool {
+        UserDefaults.standard.object(forKey: "autoImportNotifySuccess") as? Bool ?? true
+    }
 
     private let validExtensions: Set<String> = [
         "stl", "step", "stp", "3mf", "zip", "scad", "f3d", "obj"
@@ -41,12 +51,18 @@ final class AppState {
         InboxNotificationRouter.shared.configure()
         scanDownloads()
 
-        timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
-            // El Timer se programa en el run loop principal de esta app.
+        // DispatchSourceTimer no depende del modo activo del RunLoop de AppKit.
+        // Sigue escaneando cuando la ventana pierde foco, está minimizada
+        // o macOS está procesando menús/eventos de la interfaz.
+        let source = DispatchSource.makeTimerSource(queue: .main)
+        source.schedule(deadline: .now() + interval, repeating: interval)
+        source.setEventHandler { [weak self] in
             MainActor.assumeIsolated {
                 self?.scanDownloads()
             }
         }
+        timer = source
+        source.resume()
     }
 
     // Conservamos el nombre para no romper llamadas de ContentView/STLManagerApp.
@@ -125,6 +141,13 @@ final class AppState {
                 initializedInbox = true
                 knownPaths = current
                 notified = current
+                // También se comprobarán los elementos preexistentes cuando el modo automático esté activo.
+                if autoImportEnabled {
+                    for item in candidates {
+                        stability[item.url.standardizedFileURL.path] =
+                            (signature: signature(for: item), firstSeen: Date())
+                    }
+                }
             }
             // Para avisar, exigimos dos observaciones con la misma huella, separadas
             // en el tiempo. Esto reduce avisos por copias sin finalizar.
@@ -134,26 +157,81 @@ final class AppState {
                 if !knownPaths.contains(path) {
                     knownPaths.insert(path)
                     stability[path] = (signature: signature(for: item), firstSeen: now)
-                } else if !notified.contains(path) {
+                } else {
                     let fresh = signature(for: item)
-                    if let old = stability[path], old.signature == fresh,
-                       now.timeIntervalSince(old.firstSeen) >= 15 {
-                        notified.insert(path)
-                        InboxNotificationRouter.shared.notify(item: item)
-                    } else if stability[path]?.signature != fresh {
+                    if stability[path]?.signature != fresh {
                         stability[path] = (signature: fresh, firstSeen: now)
+                    } else if let old = stability[path],
+                              now.timeIntervalSince(old.firstSeen) >= 15,
+                              !notified.contains(path) {
+                        notified.insert(path)
+                        if !autoImportEnabled { InboxNotificationRouter.shared.notify(item: item) }
                     }
                 }
             }
             knownPaths.formIntersection(current)
             notified.formIntersection(current)
             stability = stability.filter { current.contains($0.key) }
+            autoAttempted = autoAttempted.filter { current.contains($0.key) }
             inboxItems = candidates
             monitoringError = nil
+            startNextAutomaticImportIfNeeded()
         } catch {
             inboxItems = []
             monitoringError = error.localizedDescription
             print("Error leyendo \(folder.path): \(error)")
+        }
+    }
+
+    // Una sola importación en vuelo, sin alterar el asistente manual.
+    // Los fallos se registran por huella para no repetir una importación defectuosa sin fin.
+    private func startNextAutomaticImportIfNeeded() {
+        guard autoImportEnabled, !autoInProgress else { return }
+        let now = Date()
+        guard let item = inboxItems.first(where: { item in
+            let path = item.url.standardizedFileURL.path
+            guard let observed = stability[path],
+                  observed.signature == signature(for: item),
+                  now.timeIntervalSince(observed.firstSeen) >= 15 else { return false }
+            return autoAttempted[path] != observed.signature
+        }) else { return }
+
+        let path = item.url.standardizedFileURL.path
+        let fingerprint = signature(for: item)
+        autoAttempted[path] = fingerprint
+        autoInProgress = true
+        autoImportStatus = "Importando automáticamente: \(item.displayName)"
+        let showSuccess = notifyAutoSuccess
+        Task.detached(priority: .utility) { [item, path, fingerprint, showSuccess] in
+            let succeeded: Bool
+            let message: String
+            do {
+                message = try AutomaticInboxImporter.importItem(item)
+                succeeded = true
+            } catch {
+                message = error.localizedDescription
+                succeeded = false
+            }
+            await MainActor.run {
+                self.autoInProgress = false
+                if succeeded {
+                    self.autoImportStatus = "\(item.displayName): \(message)"
+                    if showSuccess {
+                        InboxNotificationRouter.shared.notifyAutoImportSuccess(
+                            name: item.displayName, detail: message
+                        )
+                    }
+                } else {
+                    self.autoImportStatus = "Importación manual necesaria para \(item.displayName): \(message)"
+                    // No cambiar el estado del archivo ni reintentar mientras sea idéntico.
+                    InboxNotificationRouter.shared.notifyAutoImportFailure(
+                        name: item.displayName, detail: message
+                    )
+                }
+                // Evitar que una huella obsoleta vuelva a intentarse cuando la fuente cambió.
+                self.autoAttempted[path] = fingerprint
+                self.scanDownloads()
+            }
         }
     }
 
@@ -189,7 +267,7 @@ final class AppState {
     }
 
     func stopMonitoring() {
-        timer?.invalidate()
+        timer?.cancel()
         timer = nil
     }
 }

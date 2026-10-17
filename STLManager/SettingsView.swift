@@ -6,6 +6,8 @@ struct SettingsView: View {
     @AppStorage("inboxFolder") private var inboxFolder = ""
     @AppStorage("monitorDownloads") private var monitorDownloads = true
     @AppStorage("scanInterval") private var scanInterval = 10
+    @AppStorage("autoImportEnabled") private var autoImportEnabled = false
+    @AppStorage("autoImportNotifySuccess") private var autoImportNotifySuccess = true
     @State private var message: String?
 
     var body: some View {
@@ -27,10 +29,18 @@ struct SettingsView: View {
                     Text("60 segundos").tag(60)
                 }.disabled(!monitorDownloads)
             }
+            Section("Importación automática") {
+                Toggle("Importar automáticamente los elementos estables de _Inbox", isOn: $autoImportEnabled)
+                    .disabled(!monitorDownloads)
+                Toggle("Notificar cuando termine una importación", isOn: $autoImportNotifySuccess)
+                    .disabled(!autoImportEnabled || !monitorDownloads)
+                Text("Desactivada por defecto. Los archivos se copian, verifican y después se envían a la Papelera, igual que en la importación manual. Si el nombre ya existe o hay un error, el elemento permanece en _Inbox para gestionarlo manualmente.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
             if let message { Text(message).foregroundStyle(.orange) }
         }
         .formStyle(.grouped)
-        .frame(width: 620, height: 420)
+        .frame(width: 670, height: 550)
     }
 
     private func folderRow(_ title: String, path: String, action: @escaping () -> Void) -> some View {
