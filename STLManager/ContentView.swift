@@ -63,7 +63,7 @@ struct ContentView: View {
                     }
                 }
                 Spacer()
-                Button { appState.scanDownloads() } label: {
+                Button { appState.refreshManually() } label: {
                     Label("Actualizar", systemImage: "arrow.clockwise")
                 }
                 .controlSize(.large)

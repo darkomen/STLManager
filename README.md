@@ -1,6 +1,6 @@
 # STL Manager
 
-**Versión congelada: v0.5.8.8** · **macOS** · **Swift / SwiftUI**
+**Versión congelada: v0.5.8.9** · **macOS** · **Swift / SwiftUI**
 
 STL Manager es una aplicación nativa para macOS que organiza la entrada de proyectos de impresión 3D, los incorpora a una biblioteca local con una estructura homogénea y permite normalizar proyectos antiguos. Vigila una carpeta configurable (`_Inbox`), muestra los elementos pendientes y simplifica la importación de modelos, fuentes e imágenes de referencia.
 
@@ -10,7 +10,8 @@ STL Manager es una aplicación nativa para macOS que organiza la entrada de proy
 
 ## Estado de la versión
 
-- **v0.5.8.8 — versión congelada y validada en uso:** añade importación automática opcional a partir de `_Inbox` y corrige advertencias de aislamiento de Swift 6 detectadas durante la integración.
+- **v0.5.8.9 — versión congelada y validada en uso:** permite indicar categorías durante la importación manual, mejora los avisos tras una actualización manual y retrasa la autoimportación al menos dos intervalos de vigilancia.
+- **v0.5.8.8:** base estable previa con autoimportación opcional y correcciones de aislamiento de Swift 6.
 - **v0.5.8.4:** anterior base congelada; se mantiene como referencia en el historial del repositorio.
 - **v0.5.8.5–v0.5.8.7:** monitorización en segundo plano, ventana principal única, contador de pendientes en barra de menús y acceso a Ajustes desde la ventana principal.
 - **Sin garantía de integridad transaccional completa:** un apagado, cierre forzado o error del sistema de archivos puede interrumpir una operación.
@@ -26,6 +27,7 @@ STL Manager es una aplicación nativa para macOS que organiza la entrada de proy
 - Espera de estabilidad del elemento para evitar procesar archivos mientras se están copiando (heurística basada en atributos, no garantía absoluta ante copias pausadas).
 - Ventana principal con recuento de pendientes, acciones **Actualizar**, **Normalizar biblioteca**, **Abrir _Inbox en Finder** y acceso a **Ajustes**.
 - Notificaciones de sistema para **nuevos** elementos estables, también mientras la aplicación permanece abierta en segundo plano. Al pulsarlas, STL Manager se activa e intenta abrir directamente el asistente de importación del elemento correspondiente.
+- Al pulsar **Actualizar** desde la ventana o el menú de estado, se pueden notificar elementos pendientes nuevos que aún no hayan sido avisados; no se generan avisos duplicados por actualizar repetidamente.
 - Las notificaciones requieren permiso del usuario en los ajustes de macOS. El sistema operativo puede demorar o agrupar su presentación. Los archivos ya presentes al comenzar la vigilancia no se notifican retroactivamente.
 
 ### Barra de menús y ventanas
@@ -38,7 +40,7 @@ STL Manager es una aplicación nativa para macOS que organiza la entrada de proy
 ### Importación de proyectos
 
 - Importación asistida de un fichero, una carpeta completa o un ZIP.
-- Nombre del proyecto editable y **URL de origen opcional**.
+- Nombre del proyecto editable, **URL de origen opcional** y **categorías opcionales** introducidas durante la importación manual (separadas por comas). Las categorías se normalizan y guardan en el campo `categories` de `.stlmanager.json`, disponible también para STLViewer.
 - Vista previa de la estructura final antes de confirmar, con los ficheros dentro de las carpetas correspondientes.
 - Clasificación automática por tipo de fichero; conservación de subdirectorios internos cuando corresponde.
 - Generación de `README.md` y `.stlmanager.json`.
@@ -60,7 +62,7 @@ El detector de la bandeja admite explícitamente `stl`, `step`, `stp`, `3mf`, `z
 
 En **Ajustes → Importación automática** se puede activar la importación sin abrir el asistente. Viene **desactivada por defecto**; existe una opción adicional para mostrar notificaciones de importación completada.
 
-- Revisa los elementos detectados de `_Inbox` y espera a que estén aparentemente estables antes de importarlos. El flujo utiliza comprobaciones de estabilidad en escaneos separados, sin prometer una detección perfecta de descargas pausadas.
+- Revisa los elementos detectados de `_Inbox` y espera a que estén aparentemente estables antes de importarlos. Desde v0.5.8.9, la espera mínima de estabilidad es **dos veces el intervalo de vigilancia** (por ejemplo: cada 10 s → al menos 20 s). Se mantiene además el filtro existente de antigüedad aproximada de **15 segundos** para archivos individuales recién modificados. Son comprobaciones heurísticas: no garantizan detectar todas las descargas pausadas.
 - Procesa los proyectos **uno a uno y en segundo plano**, reutilizando el planificador, el extractor ZIP y el importador del modo manual.
 - Acepta los mismos elementos admitidos por el monitor: archivos sueltos compatibles, carpetas y ZIP, siempre sujetos a las validaciones existentes.
 - Genera la estructura habitual, el `README.md`, el `.stlmanager.json` y los hashes SHA-256; solo tras verificar la copia intenta enviar el origen a la Papelera.
@@ -219,7 +221,7 @@ STLManager/
 └── [otros archivos del proyecto]
 ```
 
-1. Hacer un commit del estado funcional y etiquetarlo **`v0.5.8.8.1`**.
+1. Hacer un commit del estado funcional y etiquetarlo **`v0.5.8.9`**.
 2. Crear una **GitHub Release** a partir de esa etiqueta y adjuntar el ZIP del `.app` exportado. Esto suele ser preferible a versionar un bundle binario dentro de Git.
 3. Incluir una breve nota de la release (macOS objetivo, cambios y advertencia sobre normalización sin copias automáticas).
 4. Conservar en Git el **`Package.resolved` del proyecto**, para que las dependencias se resuelvan a las mismas versiones en futuros builds.
@@ -230,11 +232,11 @@ Ejemplo, desde el directorio del repositorio (cuando esté inicializado y revisa
 
 ```bash
 git add .
-git commit -m "Release STL Manager v0.5.8.8.1"
-git tag v0.5.8.8.1
+git commit -m "Release STL Manager v0.5.8.9"
+git tag v0.5.8.9
 # Configurar el remoto de GitHub y subir rama y etiqueta:
 git push origin main
-git push origin v0.5.8.8.1
+git push origin v0.5.8.9
 ```
 
 > Si tu rama principal no se llama `main`, sustituye el nombre en el ejemplo.

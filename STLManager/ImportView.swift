@@ -9,6 +9,7 @@ struct ImportView: View {
 
     @State private var projectName = ""
     @State private var sourceURL = ""
+    @State private var categoryText = ""
     @State private var plan: ImportPlan?
     @State private var warning: String?
     @State private var result: String?
@@ -29,14 +30,20 @@ struct ImportView: View {
                         Form {
                             TextField("Nombre del proyecto", text: $projectName)
                             TextField("URL de origen (opcional)", text: $sourceURL)
+                            TextField("Categorías (separadas por comas, opcional)", text: $categoryText)
+                                .help("Ejemplo: Escalada, Accesorios. Se guardan en .stlmanager.json")
                         }
                         .formStyle(.grouped)
-                        .frame(height: 108)
+                        .frame(height: 158)
                         .onChange(of: projectName) { _, _ in
                             cleanup()
                             warning = nil
                         }
-                        .onChange(of: sourceURL) { _, _ in
+.onChange(of: sourceURL) { _, _ in
+                            cleanup()
+                            warning = nil
+                        }
+                        .onChange(of: categoryText) { _, _ in
                             cleanup()
                             warning = nil
                         }
@@ -209,6 +216,18 @@ struct ImportView: View {
         return rows
     }
 
+    private var parsedCategories: [String] {
+        var result: [String] = []
+        var seen = Set<String>()
+        for raw in categoryText.split(separator: ",") {
+            let name = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !name.isEmpty && seen.insert(name.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)).inserted {
+                result.append(name)
+            }
+        }
+        return result
+    }
+
     private func scopedLibrary() throws -> URL {
         guard let library = try FolderAccess.resolveBookmark(key: "libraryBookmark") else {
             throw ImportError.missingBookmark
@@ -238,7 +257,8 @@ struct ImportView: View {
                     name: projectName,
                     sourceURL: sourceURL,
                     library: library,
-                    staging: staging
+                    staging: staging,
+                    categories: parsedCategories
                 )
             } catch {
                 if let staging { try? FileManager.default.removeItem(at: staging) }

@@ -71,7 +71,7 @@ private struct STLManagerMenu: View {
             NSApplication.shared.activate(ignoringOtherApps: true)
         }
         Button("Actualizar") {
-            appState.scanDownloads()
+            appState.refreshManually()
         }
         Divider()
         Button("Acerca de STL Manager") {

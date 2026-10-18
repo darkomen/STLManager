@@ -56,7 +56,7 @@ nonisolated struct ProjectImporter {
             "id": UUID().uuidString,
             "title": plan.name,
             "source_url": plan.sourceURL,
-            "categories": [String](),
+            "categories": plan.categories,
             "import_date": date,
             "files": hashes
         ]

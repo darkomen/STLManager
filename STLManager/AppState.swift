@@ -67,7 +67,13 @@ final class AppState {
 
     // Conservamos el nombre para no romper llamadas de ContentView/STLManagerApp.
     // En una futura limpieza lo renombraremos a scanInbox().
-    func scanDownloads() {
+    // Actualización solicitada desde la interfaz o el menú de estado:
+    // avisa de los nuevos elementos listos sin esperar otro ciclo periódico.
+    func refreshManually() {
+        scanDownloads(notifyNewImmediately: true)
+    }
+
+    func scanDownloads(notifyNewImmediately: Bool = false) {
         guard isEnabled else {
             inboxItems = []
             monitoringError = nil
@@ -140,6 +146,11 @@ final class AppState {
             if !initializedInbox {
                 initializedInbox = true
                 knownPaths = current
+                if notifyNewImmediately {
+                    for item in candidates {
+                        InboxNotificationRouter.shared.notify(item: item)
+                    }
+                }
                 notified = current
                 // También se comprobarán los elementos preexistentes cuando el modo automático esté activo.
                 if autoImportEnabled {
@@ -157,6 +168,10 @@ final class AppState {
                 if !knownPaths.contains(path) {
                     knownPaths.insert(path)
                     stability[path] = (signature: signature(for: item), firstSeen: now)
+                    if notifyNewImmediately {
+                        notified.insert(path)
+                        InboxNotificationRouter.shared.notify(item: item)
+                    }
                 } else {
                     let fresh = signature(for: item)
                     if stability[path]?.signature != fresh {
@@ -165,7 +180,7 @@ final class AppState {
                               now.timeIntervalSince(old.firstSeen) >= 15,
                               !notified.contains(path) {
                         notified.insert(path)
-                        if !autoImportEnabled { InboxNotificationRouter.shared.notify(item: item) }
+                        InboxNotificationRouter.shared.notify(item: item)
                     }
                 }
             }
@@ -173,6 +188,17 @@ final class AppState {
             notified.formIntersection(current)
             stability = stability.filter { current.contains($0.key) }
             autoAttempted = autoAttempted.filter { current.contains($0.key) }
+            // La actualización manual también descubre elementos ya observados
+            // que todavía no habían alcanzado el umbral de aviso.
+            if notifyNewImmediately {
+                for item in candidates {
+                    let path = item.url.standardizedFileURL.path
+                    if !notified.contains(path) {
+                        notified.insert(path)
+                        InboxNotificationRouter.shared.notify(item: item)
+                    }
+                }
+            }
             inboxItems = candidates
             monitoringError = nil
             startNextAutomaticImportIfNeeded()
@@ -192,7 +218,7 @@ final class AppState {
             let path = item.url.standardizedFileURL.path
             guard let observed = stability[path],
                   observed.signature == signature(for: item),
-                  now.timeIntervalSince(observed.firstSeen) >= 15 else { return false }
+                  now.timeIntervalSince(observed.firstSeen) >= interval * 2 else { return false }
             return autoAttempted[path] != observed.signature
         }) else { return }
 

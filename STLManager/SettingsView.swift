@@ -32,6 +32,8 @@ struct SettingsView: View {
             Section("Importación automática") {
                 Toggle("Importar automáticamente los elementos estables de _Inbox", isOn: $autoImportEnabled)
                     .disabled(!monitorDownloads)
+                Text("La importación automática espera al menos el doble del intervalo de monitorización con el elemento estable. Ejemplo: 10 s de vigilancia → 20 s antes de importar. Puedes importarlo manualmente durante ese tiempo.")
+                    .font(.caption).foregroundStyle(.secondary)
                 Toggle("Notificar cuando termine una importación", isOn: $autoImportNotifySuccess)
                     .disabled(!autoImportEnabled || !monitorDownloads)
                 Text("Desactivada por defecto. Los archivos se copian, verifican y después se envían a la Papelera, igual que en la importación manual. Si el nombre ya existe o hay un error, el elemento permanece en _Inbox para gestionarlo manualmente.")

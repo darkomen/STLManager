@@ -10,6 +10,7 @@ nonisolated struct ImportPlan {
     let item: InboxItem
     let name: String
     let sourceURL: String
+    let categories: [String]
     let libraryURL: URL
     let stagingRoot: URL?
     let files: [PlannedFile]

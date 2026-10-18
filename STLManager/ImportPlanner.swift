@@ -54,7 +54,7 @@ nonisolated struct ImportPlanner {
         return ([category] + parts).joined(separator: "/")
     }
 
-    nonisolated static func prepare(item: InboxItem, name: String, sourceURL: String, library: URL, staging: URL? = nil) throws -> ImportPlan {
+    nonisolated static func prepare(item: InboxItem, name: String, sourceURL: String, library: URL, staging: URL? = nil, categories: [String] = []) throws -> ImportPlan {
         let clean = try validate(name: name, sourceURL: sourceURL, library: library)
         let entries = try collect(item, stagingRoot: staging)
         guard !entries.isEmpty else { throw ImportError.emptyProject }
@@ -64,6 +64,6 @@ nonisolated struct ImportPlanner {
             guard paths.insert(dest.lowercased()).inserted else { throw ImportError.unsafeArchive }
             return PlannedFile(source: url, relativePath: dest)
         }
-        return ImportPlan(item: item, name: clean, sourceURL: sourceURL.trimmingCharacters(in: .whitespacesAndNewlines), libraryURL: library, stagingRoot: staging, files: files)
+        return ImportPlan(item: item, name: clean, sourceURL: sourceURL.trimmingCharacters(in: .whitespacesAndNewlines), categories: categories, libraryURL: library, stagingRoot: staging, files: files)
     }
 }
